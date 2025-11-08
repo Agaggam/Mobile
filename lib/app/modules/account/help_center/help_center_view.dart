@@ -44,18 +44,16 @@ class HelpCenterView extends GetView<HelpCenterController> {
             ),
             const SizedBox(height: 16),
 
-            // FAQ List
-            Obx(
-              () => ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: controller.faqs.length,
-                itemBuilder: (context, index) {
-                  final faq = controller.faqs[index];
-                  return _buildFAQItem(theme, colorScheme, faq, index);
-                },
-              ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: controller.faqs.length,
+              itemBuilder: (context, index) {
+                final faq = controller.faqs[index];
+                // Gunakan Obx hanya di level item
+                return Obx(() => _buildFAQItem(theme, colorScheme, faq, index));
+              },
             ),
 
             const SizedBox(height: 32),
@@ -129,53 +127,47 @@ class HelpCenterView extends GetView<HelpCenterController> {
     FAQ faq,
     int index,
   ) {
-    return Obx(
-      () => Card(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: Theme(
-          data: Theme.of(Get.context!).copyWith(
-            splashColor: Colors.transparent,
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Theme(
+        data: Theme.of(Get.context!).copyWith(
+          splashColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          onExpansionChanged: (isExpanded) {
+            controller.toggleFAQ(index);
+          },
+          title: Text(
+            faq.question,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: colorScheme.onSurface,
+            ),
           ),
-          child: ExpansionTile(
-            onExpansionChanged: (isExpanded) {
-              controller.toggleFAQ(index);
-            },
-            title: Text(
-              faq.question,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            trailing: Obx(
-              () => Icon(
-                faq.isExpanded.value
-                    ? Icons.expand_less
-                    : Icons.expand_more,
-                color: colorScheme.primary,
-              ),
-            ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  faq.answer,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.8),
-                    height: 1.5,
-                  ),
+          trailing: Icon(
+            faq.isExpanded.value ? Icons.expand_less : Icons.expand_more,
+            color: colorScheme.primary,
+          ),
+          initiallyExpanded: faq.isExpanded.value,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                faq.answer,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.8),
+                  height: 1.5,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildContactSupportSection(
-      ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildContactSupportSection(ThemeData theme, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
