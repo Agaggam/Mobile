@@ -1,4 +1,3 @@
-// Model untuk data keranjang (Cart)
 class Cart {
   final int id;
   final int userId;
@@ -14,9 +13,8 @@ class Cart {
 
   factory Cart.fromJson(Map<String, dynamic> json) {
     var productList = json['products'] as List;
-    List<CartProduct> products = productList
-        .map((i) => CartProduct.fromJson(i))
-        .toList();
+    List<CartProduct> products =
+        productList.map((i) => CartProduct.fromJson(i)).toList();
 
     return Cart(
       id: json['id'],

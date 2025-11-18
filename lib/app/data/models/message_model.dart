@@ -1,14 +1,35 @@
-// Model untuk data pesan
 class Message {
-  final String id;
+  final int id; // ID dari tabel Supabase
+  final String senderId;
+  final String receiverId;
   final String text;
-  final String senderId; // 'user' atau 'admin'
-  final DateTime timestamp;
+  final DateTime createdAt;
 
   Message({
     required this.id,
-    required this.text,
     required this.senderId,
-    required this.timestamp,
+    required this.receiverId,
+    required this.text,
+    required this.createdAt,
   });
+
+  // Factory baru untuk membaca data dari Supabase
+  factory Message.fromJson(Map<String, dynamic> json) {
+    return Message(
+      id: json['id'],
+      senderId: json['sender_id'],
+      receiverId: json['receiver_id'],
+      text: json['message_text'],
+      createdAt: DateTime.parse(json['created_at']),
+    );
+  }
+
+  // Helper untuk mengirim data ke Supabase
+  Map<String, dynamic> toJsonForInsert() {
+    return {
+      'sender_id': senderId,
+      'receiver_id': receiverId,
+      'message_text': text,
+    };
+  }
 }

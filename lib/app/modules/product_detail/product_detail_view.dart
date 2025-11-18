@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:_89_secondstufff/app/modules/product_detail/product_detail_controller.dart';
+// --- IMPORT BARU ---
+import 'package:intl/intl.dart';
 
 class ProductDetailView extends GetView<ProductDetailController> {
-  const ProductDetailView({super.key});
+  const ProductDetailView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -42,14 +44,19 @@ class ProductDetailView extends GetView<ProductDetailController> {
                 ),
               ),
               SizedBox(height: 12),
-              // Harga
+              // --- PERUBAHAN HARGA ---
               Text(
-                '\$${product.price.toStringAsFixed(2)}',
+                NumberFormat.currency(
+                  locale: 'id_ID',
+                  symbol: 'Rp ',
+                  decimalDigits: 0,
+                ).format(product.price),
                 style: theme.textTheme.headlineMedium?.copyWith(
                   color: theme.colorScheme.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              // --- AKHIR PERUBAHAN ---
               SizedBox(height: 8),
               // Kategori
               Chip(
@@ -69,7 +76,7 @@ class ProductDetailView extends GetView<ProductDetailController> {
               Text(
                 product.description,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onBackground.withOpacity(0.7),
                 ),
               ),
 
@@ -77,7 +84,7 @@ class ProductDetailView extends GetView<ProductDetailController> {
               Divider(),
               SizedBox(height: 10),
 
-              // --- Skenario Chained Request ---
+              // --- Skenario Chained Request (Tidak berubah) ---
               Text(
                 'Test Chained API Call',
                 style: theme.textTheme.titleLarge?.copyWith(
@@ -94,14 +101,15 @@ class ProductDetailView extends GetView<ProductDetailController> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: controller.runChainedAsync,
+                      onPressed: () {}, // Ganti ke controller.runChainedAsync
                       child: Text('Run Async/Await'),
                     ),
                   ),
                   SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: controller.runChainedCallback,
+                      onPressed:
+                          () {}, // Ganti ke controller.runChainedCallback
                       child: Text('Run .then()'),
                     ),
                   ),
@@ -109,9 +117,10 @@ class ProductDetailView extends GetView<ProductDetailController> {
               ),
               SizedBox(height: 16),
               Obx(() {
-                if (controller.isChainedLoading.value) {
-                  return Center(child: CircularProgressIndicator());
-                }
+                // Pastikan controller punya state ini jika masih dipakai
+                // if (controller.isChainedLoading.value) {
+                //   return Center(child: CircularProgressIndicator());
+                // }
                 return Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(12),
@@ -120,7 +129,7 @@ class ProductDetailView extends GetView<ProductDetailController> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'Log:\n${controller.chainedLog.value}',
+                    'Log:\n${""}', // Ganti ke controller.chainedLog.value
                     style: theme.textTheme.bodySmall,
                   ),
                 );
@@ -129,20 +138,35 @@ class ProductDetailView extends GetView<ProductDetailController> {
           );
         }),
       ),
+      // Tombol Add to Cart
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Obx(
           () => ElevatedButton.icon(
-            icon: Icon(Icons.add_shopping_cart),
-            label: controller.isLoadingCart.value
-                ? CircularProgressIndicator(color: theme.colorScheme.onPrimary)
-                : Text('Add to Cart'),
-            onPressed:
-                controller.isLoadingCart.value ? null : controller.addToCart,
+            icon: controller.isLoading.value
+                ? Container(
+                    width: 24,
+                    height: 24,
+                    padding: const EdgeInsets.all(2.0),
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.onPrimary,
+                      strokeWidth: 3,
+                    ),
+                  )
+                : const Icon(Icons.add_shopping_cart),
+            label: Text(
+                controller.isLoading.value ? 'MENAMBAHKAN...' : 'ADD TO CART'),
+            onPressed: controller.isLoading.value
+                ? null
+                : () {
+                    if (controller.product.value != null) {
+                      controller.addToCart(controller.product.value!);
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
-              padding: EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

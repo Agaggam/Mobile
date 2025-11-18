@@ -1,51 +1,147 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:_89_secondstufff/app/data/services/api_service.dart';
+import 'package:_89_secondstufff/app/data/services/supabase_service.dart';
 import 'package:_89_secondstufff/app/routes/app_pages.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+// --- IMPORT BARU ---
+import 'package:_89_secondstufff/app/data/models/profiles_model.dart';
 
 class AuthController extends GetxController {
-  final ApiService _apiService = Get.find<ApiService>();
-  final TextEditingController usernameController = TextEditingController(
-    text: 'mor_2314',
+  final SupabaseService _supabaseService = Get.find<SupabaseService>();
+
+  final TextEditingController emailController = TextEditingController(
+    text: '', // Ganti ke email Anda yang 'admin'
   );
   final TextEditingController passwordController = TextEditingController(
-    text: '83r5^_',
+    text: '',
   );
+  var isLoadingLogin = false.obs;
+  var isLoginPasswordHidden = true.obs;
 
-  var isLoading = false.obs;
+  final TextEditingController emailSignUpController = TextEditingController();
+  final TextEditingController passwordSignUpController =
+      TextEditingController();
+  var isLoadingSignUp = false.obs;
+  var isSignUpPasswordHidden = true.obs;
 
-  void login() async {
-    if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
+  void toggleLoginPasswordVisibility() {
+    isLoginPasswordHidden.value = !isLoginPasswordHidden.value;
+  }
+
+  void toggleSignUpPasswordVisibility() {
+    isSignUpPasswordHidden.value = !isSignUpPasswordHidden.value;
+  }
+
+  // --- MODIFIKASI BESAR: signInWithEmail ---
+  void signInWithEmail() async {
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
       Get.snackbar(
         'Error',
-        'Username dan password tidak boleh kosong',
+        'Email dan password tidak boleh kosong',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
-    isLoading.value = true;
+    isLoadingLogin.value = true;
     try {
-      final authToken = await _apiService.login(
-        usernameController.text,
-        passwordController.text,
+      // 1. Sukses Login
+      final authResponse =
+          await _supabaseService.client.auth.signInWithPassword(
+        email: emailController.text,
+        password: passwordController.text,
       );
 
-      isLoading.value = false;
+      // 2. Ambil User ID
+      final userId = authResponse.user?.id;
+      if (userId == null) {
+        throw Exception("User tidak ditemukan setelah login.");
+      }
 
-      print('Login success, token: ${authToken.token}');
+      // 3. Cek 'role' dari tabel 'profiles'
+      final profileResponse = await _supabaseService.client
+          .from('profiles')
+          .select('id, email, role')
+          .eq('id', userId)
+          .single();
+
+      // Buat model Profile (meskipun hanya 'role' yang kita ambil)
+      final profile = Profile.fromJson(profileResponse);
+
+      isLoadingLogin.value = false;
+
+      // 4. Navigasi berdasarkan 'role'
+      if (profile.role == 'admin') {
+        Get.offAllNamed(AppRoutes.ADMIN_HOME);
+      } else {
+        Get.offAllNamed(AppRoutes.MAIN_NAVIGATION);
+      }
+    } on AuthException catch (e) {
+      isLoadingLogin.value = false;
       Get.snackbar(
-        'Success',
-        'Login berhasil!',
+        'Login Gagal',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      isLoadingLogin.value = false;
+      Get.snackbar(
+        'Login Gagal',
+        'Terjadi kesalahan: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  // --- FUNGSI SIGN UP (Tidak Berubah) ---
+  void signUpWithEmail() async {
+    if (emailSignUpController.text.isEmpty ||
+        passwordSignUpController.text.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Email dan password tidak boleh kosong',
         snackPosition: SnackPosition.BOTTOM,
       );
+      return;
+    }
 
-      Get.offAllNamed(AppRoutes.MAIN_NAVIGATION);
-    } catch (e) {
-      isLoading.value = false;
+    isLoadingSignUp.value = true;
+    try {
+      // Panggil Supabase Auth untuk Sign Up
+      // Trigger 'handle_new_user' akan otomatis membuat profile
+      await _supabaseService.client.auth.signUp(
+        email: emailSignUpController.text,
+        password: passwordSignUpController.text,
+      );
+
+      isLoadingSignUp.value = false;
+
       Get.snackbar(
-        'Login Failed',
-        e.toString(),
+        'Registrasi Berhasil',
+        'Silakan cek email Anda untuk verifikasi.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      Get.back();
+    } on AuthException catch (e) {
+      isLoadingSignUp.value = false;
+      Get.snackbar(
+        'Registrasi Gagal',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      isLoadingSignUp.value = false;
+      Get.snackbar(
+        'Registrasi Gagal',
+        'Terjadi kesalahan: $e',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -59,8 +155,10 @@ class AuthController extends GetxController {
 
   @override
   void onClose() {
-    usernameController.dispose();
+    emailController.dispose();
     passwordController.dispose();
+    emailSignUpController.dispose();
+    passwordSignUpController.dispose();
     super.onClose();
   }
 }

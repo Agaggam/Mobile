@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:_89_secondstufff/app/data/models/product_model.dart';
+// --- IMPORT BARU ---
+import 'package:intl/intl.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onTap;
 
-  const ProductCard({super.key, required this.product, required this.onTap});
+  const ProductCard({Key? key, required this.product, required this.onTap})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -54,14 +57,19 @@ class ProductCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    // Harga
+                    // --- PERUBAHAN HARGA ---
                     Text(
-                      '\$${product.price.toStringAsFixed(2)}',
+                      NumberFormat.currency(
+                        locale: 'id_ID',
+                        symbol: 'Rp ',
+                        decimalDigits: 0,
+                      ).format(product.price),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    // --- AKHIR PERUBAHAN ---
                   ],
                 ),
               ),

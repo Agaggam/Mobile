@@ -13,7 +13,7 @@ class CategoryProductsView extends GetView<CategoryProductsController> {
       appBar: AppBar(
         // Judul AppBar dinamis berdasarkan kategori
         title: Obx(() => Text(
-              controller.categoryName.value.capitalizeFirst ?? 'Produk',
+              controller.category.value?.name.capitalizeFirst ?? 'Produk',
             )),
         centerTitle: true,
       ),

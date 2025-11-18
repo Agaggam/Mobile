@@ -1,0 +1,159 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:_89_secondstufff/app/data/models/product_model.dart';
+import 'package:_89_secondstufff/app/data/models/category_model.dart';
+import 'package:_89_secondstufff/app/data/services/supabase_service.dart';
+import 'package:_89_secondstufff/app/data/services/storage_service.dart';
+
+class AdminProductFormController extends GetxController {
+  final SupabaseService _supabase = Get.find<SupabaseService>();
+
+  // Gunakan Get.find() jika StorageService sudah di-put di main.dart
+  // Jika belum, kita put sementara di sini (lazy)
+  final StorageService _storage = Get.put(StorageService());
+
+  // Form Key
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  // Controllers
+  final titleC = TextEditingController();
+  final priceC = TextEditingController();
+  final descriptionC = TextEditingController();
+
+  // State
+  var isLoading = false.obs;
+  var categories = <Category>[].obs;
+  var selectedCategoryId = Rx<int?>(null);
+
+  // Image State
+  var selectedImage = Rx<File?>(null); // Gambar baru dari galeri
+  var existingImageUrl = ''.obs; // URL gambar lama (jika edit)
+
+  // Data Produk (Jika Edit)
+  Product? productToEdit;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCategories();
+
+    // Cek apakah ada argumen (Mode Edit)
+    if (Get.arguments is Product) {
+      productToEdit = Get.arguments as Product;
+      _fillFormForEdit();
+    }
+  }
+
+  void fetchCategories() async {
+    try {
+      final response = await _supabase.client.from('categories').select();
+      final data = (response as List).map((e) => Category.fromJson(e)).toList();
+      categories.assignAll(data);
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal memuat kategori: $e');
+    }
+  }
+
+  void _fillFormForEdit() {
+    if (productToEdit == null) return;
+    titleC.text = productToEdit!.title;
+    priceC.text = productToEdit!.price.toStringAsFixed(0);
+    descriptionC.text = productToEdit!.description;
+    existingImageUrl.value = productToEdit!.image;
+
+    // Kita butuh category_id. Karena Product model kita hanya menyimpan nama kategori,
+    // kita mungkin perlu mencari ID-nya dari list kategori nanti,
+    // atau idealnya Product model menyimpan category_id juga.
+    // Untuk sekarang, kita biarkan user memilih kategori ulang atau
+    // kita cari manual jika nama cocok.
+  }
+
+  // Fungsi Pilih Gambar
+  void pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      selectedImage.value = File(image.path);
+    }
+  }
+
+  // Fungsi Simpan (Create / Update)
+  void saveProduct() async {
+    if (!formKey.currentState!.validate()) return;
+
+    if (selectedCategoryId.value == null && productToEdit == null) {
+      Get.snackbar('Error', 'Pilih kategori produk');
+      return;
+    }
+
+    // Validasi Gambar: Harus ada gambar (baru atau lama)
+    if (selectedImage.value == null && existingImageUrl.value.isEmpty) {
+      Get.snackbar('Error', 'Pilih gambar produk');
+      return;
+    }
+
+    isLoading.value = true;
+
+    try {
+      String? imageUrl = existingImageUrl.value;
+
+      // 1. Upload Gambar Baru (Jika ada)
+      if (selectedImage.value != null) {
+        final uploadedUrl =
+            await _storage.uploadProductImage(selectedImage.value!);
+        if (uploadedUrl != null) {
+          imageUrl = uploadedUrl;
+        } else {
+          throw Exception("Gagal upload gambar");
+        }
+      }
+
+      // 2. Siapkan Data
+      final productData = {
+        'title': titleC.text,
+        'price': double.parse(priceC.text),
+        'description': descriptionC.text,
+        'image_url': imageUrl,
+        // Jika edit dan kategori tidak diubah, gunakan yang lama (tapi kita butuh ID-nya)
+        // Sederhananya: Wajibkan pilih kategori saat ini
+        'category_id': selectedCategoryId.value,
+      };
+
+      if (productToEdit == null) {
+        // --- CREATE (INSERT) ---
+        await _supabase.client.from('products').insert(productData);
+        Get.snackbar('Sukses', 'Produk berhasil ditambahkan');
+      } else {
+        // --- UPDATE ---
+        // Hapus category_id dari map jika user tidak mengubahnya (null)
+        if (selectedCategoryId.value == null) {
+          productData.remove('category_id');
+        }
+
+        await _supabase.client
+            .from('products')
+            .update(productData)
+            .eq('id', productToEdit!.id);
+
+        Get.snackbar('Sukses', 'Produk berhasil diperbarui');
+      }
+
+      // Kembali ke list
+      Get.back(result: true); // Kirim result true agar list refresh
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal menyimpan produk: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    titleC.dispose();
+    priceC.dispose();
+    descriptionC.dispose();
+    super.onClose();
+  }
+}

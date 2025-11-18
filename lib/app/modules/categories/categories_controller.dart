@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:_89_secondstufff/app/data/services/api_service.dart';
+import 'package:_89_secondstufff/app/data/providers/product_provider.dart';
+import 'package:_89_secondstufff/app/data/models/category_model.dart'; // <-- IMPORT MODEL BARU
 import 'package:_89_secondstufff/app/routes/app_pages.dart';
 
 class CategoriesController extends GetxController {
   // --- PERUBAHAN DI SINI ---
-  final ApiService apiService = Get.find<ApiService>();
+  final ProductProvider _productProvider = Get.find<ProductProvider>();
 
   var isLoading = true.obs;
-  var categories = <String>[].obs;
+  var categories = <Category>[].obs;
   // --- AKHIR PERUBAHAN ---
 
   @override
@@ -21,9 +22,7 @@ class CategoriesController extends GetxController {
   void fetchCategories() async {
     try {
       isLoading.value = true;
-      var fetchedCategories = await apiService.getCategories();
-
-      // --- PERBAIKAN: Tampilkan semua kategori, jangan difilter ---
+      var fetchedCategories = await _productProvider.getCategories();
       categories.assignAll(fetchedCategories);
     } catch (e) {
       Get.snackbar(
@@ -36,11 +35,11 @@ class CategoriesController extends GetxController {
     }
   }
 
-  void onCategoryTap(String apiCategoryName) {
+  void onCategoryTap(Category category) {
     // Navigasi ke halaman produk berdasarkan kategori
     Get.toNamed(
       AppRoutes.CATEGORY_PRODUCTS,
-      arguments: apiCategoryName,
+      arguments: category,
     );
   }
 

@@ -42,6 +42,7 @@ class LoginView extends GetView<AuthController> {
 
                 // Sign Up Link
                 _buildSignUpSection(theme, colorScheme),
+                SizedBox(height: isKeyboardOpen ? 20 : 40), // Spacing di bawah
               ],
             ),
           ),
@@ -101,41 +102,48 @@ class LoginView extends GetView<AuthController> {
   Widget _buildFormSection(ThemeData theme, ColorScheme colorScheme) {
     return Column(
       children: [
-        // Username TextField
+        // --- PERBAIKAN 1: Mengganti Username ke Email ---
         _buildTextFieldWithIcon(
-          controller: controller.usernameController,
-          label: 'Username',
-          hint: 'Masukkan username Anda',
-          icon: Icons.person_outline,
+          controller: controller.emailController, // <-- DARI emailController
+          label: 'Email', // <-- Label diubah
+          hint: 'Masukkan email Anda', // <-- Hint diubah
+          icon: Icons.email_outlined, // <-- Ikon diubah
           theme: theme,
           colorScheme: colorScheme,
           obscure: false,
+          keyboardType: TextInputType
+              .emailAddress, // <-- Ditambahkan untuk keyboard email
         ),
         const SizedBox(height: 20),
 
         // Password TextField
-        _buildTextFieldWithIcon(
-          controller: controller.passwordController,
-          label: 'Password',
-          hint: 'Masukkan password Anda',
-          icon: Icons.lock_outline,
-          theme: theme,
-          colorScheme: colorScheme,
-          obscure: true,
-        ),
+        Obx(() => _buildTextFieldWithIcon(
+              controller: controller.passwordController,
+              label: 'Password',
+              hint: 'Masukkan password Anda',
+              icon: Icons.lock_outline,
+              theme: theme,
+              colorScheme: colorScheme,
+              obscure: controller.isLoginPasswordHidden.value, // Bind ke state
+              isPasswordField: true, // Tandai sebagai password
+              onToggleVisibility: controller.toggleLoginPasswordVisibility,
+            )),
+
         const SizedBox(height: 12),
 
         // Remember Me & Forgot Password Row
         _buildRememberForgotRow(theme, colorScheme),
         const SizedBox(height: 30),
 
-        // Login Button
+        // --- PERBAIKAN 2: Menghubungkan ke state & method Supabase ---
         Obx(
           () => SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed:
-                  controller.isLoading.value ? null : controller.login,
+                  controller.isLoadingLogin.value // <-- DARI isLoadingLogin
+                      ? null
+                      : controller.signInWithEmail, // <-- DARI signInWithEmail
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
@@ -145,7 +153,7 @@ class LoginView extends GetView<AuthController> {
                 ),
                 elevation: 2,
               ),
-              child: controller.isLoading.value
+              child: controller.isLoadingLogin.value // <-- DARI isLoadingLogin
                   ? SizedBox(
                       height: 20,
                       width: 20,
@@ -177,6 +185,9 @@ class LoginView extends GetView<AuthController> {
     required ThemeData theme,
     required ColorScheme colorScheme,
     required bool obscure,
+    TextInputType keyboardType = TextInputType.text, // <-- Default
+    bool isPasswordField = false,
+    VoidCallback? onToggleVisibility,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,19 +204,22 @@ class LoginView extends GetView<AuthController> {
         TextField(
           controller: controller,
           obscureText: obscure,
+          keyboardType: keyboardType, // <-- Digunakan di sini
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(
               icon,
               color: colorScheme.primary.withOpacity(0.7),
             ),
-            suffixIcon: obscure
+            suffixIcon: isPasswordField
                 ? IconButton(
                     icon: Icon(
-                      Icons.visibility_off_outlined,
+                      obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       color: colorScheme.onSurface.withOpacity(0.5),
                     ),
-                    onPressed: () {},
+                    onPressed: onToggleVisibility,
                   )
                 : null,
             filled: true,
@@ -332,7 +346,7 @@ class LoginView extends GetView<AuthController> {
             _buildSocialButton(
               theme,
               colorScheme,
-              '𝓰',
+              'G', // Simbol 'G' standar
               'Google',
               () {
                 Get.snackbar(
@@ -346,7 +360,7 @@ class LoginView extends GetView<AuthController> {
             _buildSocialButton(
               theme,
               colorScheme,
-              '◆',
+              '', // Simbol Apple
               'Apple',
               () {
                 Get.snackbar(
@@ -390,6 +404,7 @@ class LoginView extends GetView<AuthController> {
                 symbol,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onSurface,
+                  fontWeight: FontWeight.bold, // Ditebalkan
                 ),
               ),
               const SizedBox(height: 4),

@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'cart_controller.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:_89_secondstufff/app/modules/cart/cart_controller.dart';
+import 'package:_89_secondstufff/app/data/models/cart_item.dart';
+import 'package:_89_secondstufff/app/data/services/local_storage_service.dart';
+import 'package:_89_secondstufff/app/data/models/product_model.dart';
+// --- IMPORT BARU ---
+import 'package:intl/intl.dart';
 
 class CartView extends GetView<CartController> {
-  const CartView({super.key});
+  const CartView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final Box<CartItem> cartBox = Get.find<LocalStorageService>().cartBox;
 
     return Scaffold(
       appBar: AppBar(
@@ -19,9 +26,13 @@ class CartView extends GetView<CartController> {
         ),
         centerTitle: true,
       ),
-      body: Obx(
-        () {
-          if (controller.cartItems.isEmpty) {
+      body: ValueListenableBuilder(
+        valueListenable: cartBox.listenable(),
+        builder: (context, Box<CartItem> box, _) {
+          final items = box.values.toList();
+
+          if (items.isEmpty) {
+            // ... (kode 'keranjang kosong' tidak berubah)
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -46,18 +57,16 @@ class CartView extends GetView<CartController> {
               ),
             );
           }
-          // Jika keranjang tidak kosong, tampilkan list
+
           return Column(
             children: [
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  itemCount: controller.cartItems.length,
+                  itemCount: items.length,
                   itemBuilder: (context, index) {
-                    final product = controller.cartItems.keys.elementAt(index);
-                    final quantity =
-                        controller.cartItems.values.elementAt(index);
-                    return _buildCartItemTile(theme, product, quantity);
+                    final cartItem = items[index];
+                    return _buildCartItemTile(theme, cartItem);
                   },
                 ),
               ),
@@ -69,15 +78,14 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // Widget untuk satu item di keranjang
-  Widget _buildCartItemTile(ThemeData theme, dynamic product, int quantity) {
+  Widget _buildCartItemTile(ThemeData theme, CartItem item) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12.0),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
-            // Gambar
+            // ... (gambar tidak berubah)
             Container(
               width: 80,
               height: 80,
@@ -86,7 +94,7 @@ class CartView extends GetView<CartController> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Image.network(product.image, fit: BoxFit.contain),
+              child: Image.network(item.image, fit: BoxFit.contain),
             ),
             const SizedBox(width: 12),
             // Info Produk
@@ -95,39 +103,49 @@ class CartView extends GetView<CartController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product.title,
+                    item.title,
                     style: theme.textTheme.bodyLarge
                         ?.copyWith(fontWeight: FontWeight.w600),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
+                  // --- PERUBAHAN HARGA ---
                   Text(
-                    '\$${product.price.toStringAsFixed(2)}',
+                    NumberFormat.currency(
+                      locale: 'id_ID',
+                      symbol: 'Rp ',
+                      decimalDigits: 0,
+                    ).format(item.price),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  // --- AKHIR PERUBAHAN ---
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            // Tombol Kuantitas
+            // ... (tombol kuantitas tidak berubah)
             Column(
               children: [
                 IconButton(
                   icon: Icon(Icons.add, color: theme.colorScheme.primary),
-                  onPressed: () => controller.addToCart(product),
+                  onPressed: () => controller.addToCart(
+                    Product.fromJson(item.toJsonForProduct()),
+                  ),
                 ),
                 Text(
-                  quantity.toString(),
+                  item.quantity.toString(),
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: Icon(Icons.remove, color: theme.colorScheme.error),
-                  onPressed: () => controller.removeFromCart(product),
+                  onPressed: () => controller.removeFromCart(
+                    Product.fromJson(item.toJsonForProduct()),
+                  ),
                 ),
               ],
             ),
@@ -153,26 +171,34 @@ class CartView extends GetView<CartController> {
       ),
       child: SafeArea(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Total Harga
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Total (${controller.totalItemCount} item):',
-                  style: theme.textTheme.bodyLarge,
+                GetBuilder<CartController>(
+                  builder: (_) => Text(
+                    'Total (${_.totalItemCount} item):',
+                    style: theme.textTheme.bodyLarge,
+                  ),
                 ),
-                Obx(
-                  () => Text(
-                    '\$${controller.totalPrice.toStringAsFixed(2)}',
+                // --- PERUBAHAN HARGA TOTAL ---
+                GetBuilder<CartController>(
+                  builder: (_) => Text(
+                    NumberFormat.currency(
+                      locale: 'id_ID',
+                      symbol: 'Rp ',
+                      decimalDigits: 0,
+                    ).format(_.totalPrice),
                     style: theme.textTheme.headlineSmall
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
+                // --- AKHIR PERUBAHAN ---
               ],
             ),
             const SizedBox(height: 16),
-            // Tombol Checkout
+            // ... (tombol checkout tidak berubah)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

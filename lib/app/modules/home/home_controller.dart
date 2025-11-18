@@ -2,11 +2,11 @@ import 'package:flutter/material.dart' hide CarouselController;
 import 'package:get/get.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:_89_secondstufff/app/data/models/product_model.dart';
-import 'package:_89_secondstufff/app/data/services/api_service.dart';
+import 'package:_89_secondstufff/app/data/providers/product_provider.dart';
 import 'package:_89_secondstufff/app/routes/app_pages.dart';
 
 class HomeController extends GetxController {
-  final ApiService apiService = Get.find<ApiService>();
+  final ProductProvider _productProvider = Get.find<ProductProvider>();
   final CarouselSliderController carouselController =
       CarouselSliderController();
 
@@ -25,10 +25,11 @@ class HomeController extends GetxController {
 
   void fetchSliderProducts() async {
     try {
-      isLoadingBanners.value = true;
-      var products = await apiService.getProductsByCategory("men's clothing");
+      var products = await _productProvider.getProductsByCategoryName(
+          "Celana", // Pastikan 'electronics' ada di tabel categories Anda
+          limit: 2);
       if (products.isNotEmpty) {
-        sliderProducts.assignAll(products.take(5).map((p) => p.image).toList());
+        sliderProducts.assignAll(products.map((p) => p.image).toList());
       }
     } catch (e) {
       print("Error fetch slider products: $e");
@@ -47,8 +48,10 @@ class HomeController extends GetxController {
   void fetchFeaturedGrid() async {
     try {
       isLoadingGrid.value = true;
-      var products = await apiService.getProductsByCategory("men's clothing");
-      featuredProductsGrid.assignAll(products.take(6));
+      var products = await _productProvider.getProductsByCategoryName(
+          "Jaket & Hoodie", // Pastikan 'jewelery' ada di tabel categories Anda
+          limit: 2);
+      featuredProductsGrid.assignAll(products);
     } catch (e) {
       print("Error fetch featured grid: $e");
       Get.snackbar(

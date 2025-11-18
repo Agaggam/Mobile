@@ -2,15 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:_89_secondstufff/app/routes/app_pages.dart';
 import 'package:_89_secondstufff/app/themes/theme_controller.dart';
+// --- IMPORT BARU ---
+import 'package:_89_secondstufff/app/data/services/supabase_service.dart';
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  const AppDrawer({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ThemeController themeController =
-        Get.find(); // Ambil theme controller
+    final ThemeController themeController = Get.find();
+
+    // --- LOGIKA BARU: AMBIL DATA USER DARI SUPABASE ---
+    final SupabaseService supabase = Get.find<SupabaseService>();
+    final user = supabase.currentUser;
+
+    // Olah data user (fallback ke 'Tamu' jika null)
+    final String email = user?.email ?? "Tamu";
+    // Ambil username dari bagian depan email (sebelum @)
+    final String username = email.contains('@') ? email.split('@')[0] : email;
+    // Ambil inisial huruf pertama
+    final String initial = email.isNotEmpty ? email[0].toUpperCase() : "T";
+    // --------------------------------------------------
 
     return Drawer(
       child: ListView(
@@ -19,14 +32,14 @@ class AppDrawer extends StatelessWidget {
           // Hero Section
           UserAccountsDrawerHeader(
             accountName: Text(
-              'Username Anda',
+              username, // <-- Tampilkan Username Dinamis
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onPrimary,
               ),
             ),
             accountEmail: Text(
-              'user@89secondstuff.com',
+              email, // <-- Tampilkan Email Dinamis
               style: TextStyle(
                 color: theme.colorScheme.onPrimary.withOpacity(0.8),
               ),
@@ -34,7 +47,7 @@ class AppDrawer extends StatelessWidget {
             currentAccountPicture: CircleAvatar(
               backgroundColor: theme.colorScheme.onPrimary,
               child: Text(
-                'U',
+                initial, // <-- Tampilkan Inisial Dinamis
                 style: TextStyle(
                   fontSize: 40.0,
                   color: theme.colorScheme.primary,
@@ -43,6 +56,8 @@ class AppDrawer extends StatelessWidget {
             ),
             decoration: BoxDecoration(color: theme.colorScheme.primary),
           ),
+
+          // Pilihan Utama
           _buildDrawerItem(
             icon: Icons.shopping_cart_outlined,
             text: 'Cart',
@@ -55,33 +70,34 @@ class AppDrawer extends StatelessWidget {
             icon: Icons.favorite_border,
             text: 'Wishlist',
             onTap: () {
-              // Navigasi ke Wishlist
+              Get.snackbar('Info', 'Fitur Wishlist segera hadir');
             },
           ),
           _buildDrawerItem(
             icon: Icons.history,
             text: 'Order History',
             onTap: () {
-              // Navigasi ke Order History
+              Get.snackbar('Info', 'Fitur Order History segera hadir');
             },
           ),
           _buildDrawerItem(
             icon: Icons.info_outline,
             text: 'News Info',
             onTap: () {
-              // Navigasi ke News Info
+              Get.snackbar('Info', 'Fitur News segera hadir');
             },
           ),
           _buildDrawerItem(
             icon: Icons.notifications_none,
             text: 'Notification',
             onTap: () {
-              // Navigasi ke Notification
+              Get.snackbar('Info', 'Fitur Notifikasi segera hadir');
             },
           ),
 
           Divider(thickness: 1, indent: 16, endIndent: 16),
 
+          // Bagian Others
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
@@ -95,16 +111,12 @@ class AppDrawer extends StatelessWidget {
           _buildDrawerItem(
             icon: Icons.integration_instructions_outlined,
             text: 'Instruction',
-            onTap: () {
-              // Navigasi ke Instruction
-            },
+            onTap: () {},
           ),
           _buildDrawerItem(
             icon: Icons.settings_outlined,
             text: 'Setting',
-            onTap: () {
-              // Navigasi ke Setting
-            },
+            onTap: () {},
           ),
 
           // Theme Toggle
@@ -125,12 +137,13 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
 
-          // Logout (Contoh)
+          // Logout
           _buildDrawerItem(
             icon: Icons.logout,
             text: 'Logout',
-            onTap: () {
-              // Kembali ke login
+            onTap: () async {
+              // Logout via Supabase
+              await supabase.client.auth.signOut();
               Get.offAllNamed(AppRoutes.LOGIN);
             },
           ),

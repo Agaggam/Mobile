@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:_89_secondstufff/app/widgets/category_card.dart';
 import 'categories_controller.dart';
+import 'package:_89_secondstufff/app/data/models/category_model.dart';
 
 class CategoriesView extends GetView<CategoriesController> {
   const CategoriesView({super.key});
@@ -44,14 +45,15 @@ class CategoriesView extends GetView<CategoriesController> {
           ),
           itemCount: controller.categories.length,
           itemBuilder: (context, index) {
-            final categoryName = controller.categories[index];
-            final categoryIcon = controller.getCategoryIcon(categoryName);
+            final Category category =
+                controller.categories[index]; // <-- Ini adalah objek Category
+            final categoryIcon = controller.getCategoryIcon(category.name);
 
-            // Menggunakan CategoryCard yang sudah ada
             return CategoryCard(
               icon: categoryIcon,
-              name: categoryName.capitalizeFirst ?? categoryName,
-              onTap: () => controller.onCategoryTap(categoryName),
+              name: category.name.capitalizeFirst ?? category.name,
+              onTap: () => controller
+                  .onCategoryTap(category), // <-- Kirim objek Category
             );
           },
         );

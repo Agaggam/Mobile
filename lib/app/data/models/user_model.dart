@@ -1,4 +1,3 @@
-// Model sederhana untuk response login
 class AuthToken {
   final String token;
 

@@ -12,6 +12,7 @@ import 'package:_89_secondstufff/app/modules/account/help_center/help_center_bin
 import 'package:_89_secondstufff/app/modules/account/help_center/help_center_view.dart';
 import 'package:_89_secondstufff/app/modules/account/privacy_policy/privacy_policy_binding.dart';
 import 'package:_89_secondstufff/app/modules/account/privacy_policy/privacy_policy_view.dart';
+import 'package:_89_secondstufff/app/modules/cart/cart_binding.dart';
 import 'package:_89_secondstufff/app/modules/cart/cart_view.dart';
 import 'package:_89_secondstufff/app/modules/chat/chat_binding.dart';
 import 'package:_89_secondstufff/app/modules/search/search_binding.dart';
@@ -30,6 +31,17 @@ import '../modules/search/search_view.dart';
 import '../modules/chat/chat_view.dart';
 import '../modules/category_product/category_product_binding.dart';
 import '../modules/category_product/category_product_view.dart';
+
+import '../modules/admin/admin_home/home_binding.dart';
+import '../modules/admin/admin_home/home_view.dart';
+import '../modules/admin/admin_chat_list/chat_list_binding.dart';
+import '../modules/admin/admin_chat_list/chat_list_view.dart';
+import '../modules/admin/admin_chat_detail/chat_detail_binding.dart';
+import '../modules/admin/admin_chat_detail/chat_detail_view.dart';
+import '../modules/admin/admin_product_list/product_list_binding.dart';
+import '../modules/admin/admin_product_list/product_list_view.dart';
+import '../modules/admin/admin_product_form/product_form_binding.dart';
+import '../modules/admin/admin_product_form/product_form_view.dart';
 
 part 'app_routes.dart';
 
@@ -89,8 +101,9 @@ class AppPages {
     GetPage(
       name: _Paths.CART,
       page: () => CartView(),
+      binding: CartBinding(),
     ),
-    
+
     // Account Sub Routes
     GetPage(
       name: _Paths.EDIT_PROFILE,
@@ -122,5 +135,30 @@ class AppPages {
       page: () => PrivacyPolicyView(),
       binding: PrivacyPolicyBinding(),
     ),
+
+    // Admin
+    GetPage(
+      name: _Paths.ADMIN_HOME,
+      page: () => AdminHomeView(),
+      binding: AdminHomeBinding(),
+    ),
+    GetPage(
+      name: _Paths.ADMIN_CHAT_LIST,
+      page: () => AdminChatListView(),
+      binding: AdminChatListBinding(),
+    ),
+    GetPage(
+      name: _Paths.ADMIN_CHAT_DETAIL,
+      page: () => AdminChatDetailView(),
+      binding: AdminChatDetailBinding(),
+    ),
+    GetPage(
+        name: _Paths.ADMIN_PRODUCT_LIST,
+        page: () => AdminProductListView(),
+        binding: AdminProductListBinding()),
+    GetPage(
+        name: _Paths.ADMIN_PRODUCT_FORM,
+        page: () => AdminProductFormView(),
+        binding: AdminProductFormBinding())
   ];
 }

@@ -14,7 +14,7 @@ abstract class AppRoutes {
   static const ACCOUNT = _Paths.ACCOUNT;
   static const CHAT = _Paths.CHAT;
   static const CART = _Paths.CART;
-  
+
   // Account Sub Routes
   static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
   static const ORDER_HISTORY = _Paths.ORDER_HISTORY;
@@ -22,6 +22,13 @@ abstract class AppRoutes {
   static const NOTIFICATION_SETTINGS = _Paths.NOTIFICATION_SETTINGS;
   static const HELP_CENTER = _Paths.HELP_CENTER;
   static const PRIVACY_POLICY = _Paths.PRIVACY_POLICY;
+
+  // Admin
+  static const ADMIN_HOME = _Paths.ADMIN_HOME;
+  static const ADMIN_CHAT_LIST = _Paths.ADMIN_CHAT_LIST;
+  static const ADMIN_CHAT_DETAIL = _Paths.ADMIN_CHAT_DETAIL;
+  static const ADMIN_PRODUCT_LIST = _Paths.ADMIN_PRODUCT_LIST;
+  static const ADMIN_PRODUCT_FORM = _Paths.ADMIN_PRODUCT_FORM;
 }
 
 abstract class _Paths {
@@ -37,7 +44,7 @@ abstract class _Paths {
   static const ACCOUNT = '/account';
   static const CHAT = '/chat';
   static const CART = '/cart';
-  
+
   // Account Sub Routes
   static const EDIT_PROFILE = '/account/edit-profile';
   static const ORDER_HISTORY = '/account/order-history';
@@ -45,4 +52,11 @@ abstract class _Paths {
   static const NOTIFICATION_SETTINGS = '/account/notification-settings';
   static const HELP_CENTER = '/account/help-center';
   static const PRIVACY_POLICY = '/account/privacy-policy';
+
+  // Admin
+  static const ADMIN_HOME = '/admin/admin_home';
+  static const ADMIN_CHAT_LIST = '/admin/admin_chat_list';
+  static const ADMIN_CHAT_DETAIL = '/admin/admin_chat_detail';
+  static const ADMIN_PRODUCT_LIST = '/admin/admin_product_list';
+  static const ADMIN_PRODUCT_FORM = '/admin/admin_product_form';
 }
