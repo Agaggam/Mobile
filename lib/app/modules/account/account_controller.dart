@@ -8,26 +8,20 @@ class AccountController extends GetxController {
   // Ambil theme controller yang sudah ada
   final ThemeController themeController = Get.find();
 
-  // --- TAMBAHAN: Ambil SupabaseService ---
+  // --- AMBIL SupabaseService ---
   final SupabaseService _supabase = Get.find<SupabaseService>();
-  // ----------------
 
-  // Data user (Dinamis dari Supabase)
-  // Kita gunakan getter agar selalu mengambil data terbaru dari currentUser
-  String get email => _supabase.currentUser?.email ?? "Guest";
+  // --- DATA USER (OBSERVABLE / REAKTIF) ---
+  // Kita ubah dari "get" biasa menjadi ".obs" agar UI bisa update otomatis
+  var email = ''.obs;
+  var username = 'User'.obs; // Ini akan diisi full_name
+  var initial = 'U'.obs; // Ini untuk inisial avatar huruf
+  var avatarUrl = ''.obs;
 
-  // Username diambil dari bagian depan email (sebagai fallback sederhana)
-  String get username => email.contains('@') ? email.split('@')[0] : "User";
-
-  // Inisial diambil dari huruf pertama email
-  String get initial => email.isNotEmpty ? email[0].toUpperCase() : "G";
-
-  // Observable untuk statistics (Masih dummy untuk saat ini)
+  // Observable untuk statistics (Dummy)
   var totalOrders = 12.obs;
   var totalReviews = 8.obs;
   var totalWishlist = 3.obs;
-
-  // Observable untuk user profile
   var isVerified = true.obs;
 
   @override
@@ -36,52 +30,84 @@ class AccountController extends GetxController {
     loadUserData();
   }
 
-  // Load user data dari API (jika diperlukan)
-  void loadUserData() {
-    // Di masa depan, Anda bisa mengambil data profil lengkap dari tabel 'profiles' di sini
+  // --- LOAD DATA DARI SUPABASE ---
+  void loadUserData() async {
+    try {
+      final user = _supabase.currentUser;
+      if (user == null) return;
+
+      // 1. Set Email dari Auth
+      email.value = user.email ?? "Guest";
+
+      // 2. Ambil Data Profil dari Database
+      final response = await _supabase.client
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (response != null) {
+        // Update Username (Full Name)
+        String dbName = response['full_name'] ?? '';
+
+        // Jika nama di DB kosong, pakai nama dari potongan email
+        if (dbName.isEmpty && email.value.contains('@')) {
+          username.value = email.value.split('@')[0];
+        } else {
+          username.value = dbName;
+        }
+
+        // Update Avatar URL
+        avatarUrl.value = response['avatar_url'] ?? '';
+
+        // Update Inisial (Huruf Depan)
+        if (username.value.isNotEmpty) {
+          initial.value = username.value[0].toUpperCase();
+        } else {
+          initial.value = "U";
+        }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
   }
 
-  // Navigasi ke Edit Profile
-  void goToEditProfile() {
-    Get.toNamed(AppRoutes.EDIT_PROFILE);
+  // --- NAVIGASI ---
+  void goToEditProfile() async {
+    // Kita pakai await agar saat kembali dari halaman edit, data direfresh
+    await Get.toNamed(AppRoutes.EDIT_PROFILE);
+    loadUserData();
   }
 
-  // Navigasi ke Order History
   void goToOrderHistory() {
     Get.toNamed(AppRoutes.ORDER_HISTORY);
   }
 
-  // Navigasi ke Alamat Pengiriman
   void goToShippingAddress() {
     Get.toNamed(AppRoutes.SHIPPING_ADDRESS);
   }
 
-  // Navigasi ke Notifikasi Settings
   void goToNotificationSettings() {
     Get.toNamed(AppRoutes.NOTIFICATION_SETTINGS);
   }
 
-  // Navigasi ke Help Center
   void goToHelpCenter() {
     Get.toNamed(AppRoutes.HELP_CENTER);
   }
 
-  // Navigasi ke Privacy Policy
   void goToPrivacyPolicy() {
     Get.toNamed(AppRoutes.PRIVACY_POLICY);
   }
 
-  // Show About App
   void showAboutApp() {
     Get.snackbar(
       'Tentang Aplikasi',
-      '89secondStuff v1.0.0\nA stylish shopping experience\n\nBuat Anda yang mencari gaya unik dan produk berkualitas.',
+      '89secondStuff v1.0.0\nA stylish shopping experience',
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 4),
     );
   }
 
-  // --- FUNGSI LOGOUT YANG DIPERBARUI ---
   void logout() {
     Get.defaultDialog(
       title: 'Konfirmasi Logout',
@@ -92,20 +118,14 @@ class AccountController extends GetxController {
           textAlign: TextAlign.center,
         ),
       ),
-      textConfirm: 'Ya, Keluar', // Teks tombol konfirmasi
-      textCancel: 'Batal', // Teks tombol batal
-      confirmTextColor: Colors.white, // Warna teks tombol konfirmasi
+      textConfirm: 'Ya, Keluar',
+      textCancel: 'Batal',
+      confirmTextColor: Colors.white,
       onConfirm: () async {
-        // Tutup dialog terlebih dahulu
-        Get.back();
-
+        Get.back(); // Tutup dialog
         try {
-          // 1. Sign out dari Supabase (hapus sesi server & lokal)
           await _supabase.client.auth.signOut();
-
-          // 2. Hapus semua route dan kembali ke login
           Get.offAllNamed(AppRoutes.LOGIN);
-
           Get.snackbar(
             'Logout',
             'Anda telah keluar dari akun.',
@@ -123,32 +143,17 @@ class AccountController extends GetxController {
           );
         }
       },
-      onCancel: () {
-        // Tidak perlu melakukan apa-apa, dialog otomatis tertutup
-      },
+      onCancel: () {},
     );
   }
-  // --- AKHIR PERBAIKAN ---
 
-  // Update statistics (untuk test/demo)
-  void updateStatistics({
-    int? orders,
-    int? reviews,
-    int? wishlist,
-  }) {
+  void updateStatistics({int? orders, int? reviews, int? wishlist}) {
     if (orders != null) totalOrders.value = orders;
     if (reviews != null) totalReviews.value = reviews;
     if (wishlist != null) totalWishlist.value = wishlist;
   }
 
-  // Refresh user data
   void refreshUserData() {
-    Get.snackbar(
-      'Loading',
-      'Memperbarui data...',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 1),
-    );
     loadUserData();
   }
 }

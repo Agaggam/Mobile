@@ -29,6 +29,7 @@ abstract class AppRoutes {
   static const ADMIN_CHAT_DETAIL = _Paths.ADMIN_CHAT_DETAIL;
   static const ADMIN_PRODUCT_LIST = _Paths.ADMIN_PRODUCT_LIST;
   static const ADMIN_PRODUCT_FORM = _Paths.ADMIN_PRODUCT_FORM;
+  
 }
 
 abstract class _Paths {

@@ -51,6 +51,7 @@ class AppPages {
   static const INITIAL = AppRoutes.LOGIN;
 
   static final routes = [
+    
     GetPage(
       name: _Paths.LOGIN,
       page: () => LoginView(),

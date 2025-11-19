@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+		<string>Kami memerlukan akses ke galeri untuk upload foto profil</string>
+	<key>NSCameraUsageDescription</key>
+		<string>Kami memerlukan akses ke kamera untuk foto profil</string>
 </dict>
 </plist>

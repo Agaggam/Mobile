@@ -17,9 +17,7 @@ class AdminChatDetailController extends GetxController {
   var messages = <Message>[].obs;
   var isLoading = true.obs;
 
-  // --- PERBAIKAN: Ganti tipe langganan ---
   StreamSubscription<List<Map<String, dynamic>>>? _messageSubscription;
-  // --- AKHIR PERBAIKAN ---
 
   @override
   void onInit() {

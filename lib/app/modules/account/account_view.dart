@@ -24,14 +24,17 @@ class AccountView extends GetView<AccountController> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Profile Header dengan Background Gradient
+            // 1. Profile Header (YANG DIUPDATE)
             _buildProfileHeader(theme, colorScheme),
+            
             const SizedBox(height: 24),
-            // 2. Statistics Card
+            // 2. Statistics Card (TETAP)
             _buildStatisticsSection(theme, colorScheme),
+            
             const SizedBox(height: 24),
-            // 3. Menu List
+            // 3. Menu List (TETAP)
             _buildMenuList(theme, colorScheme),
+            
             const SizedBox(height: 24),
           ],
         ),
@@ -39,7 +42,7 @@ class AccountView extends GetView<AccountController> {
     );
   }
 
-  // Profile Header dengan Gradient Background
+  // Profile Header dengan Gradient Background & OBX
   Widget _buildProfileHeader(ThemeData theme, ColorScheme colorScheme) {
     return Container(
       width: double.infinity,
@@ -59,18 +62,29 @@ class AccountView extends GetView<AccountController> {
           // Avatar dengan Badge
           Stack(
             children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: colorScheme.onPrimary.withOpacity(0.2),
-                child: Text(
-                  controller.initial,
-                  style: GoogleFonts.poppins(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onPrimary,
-                  ),
-                ),
-              ),
+              // WRAP DENGAN OBX AGAR FOTO BERUBAH OTOMATIS
+              Obx(() {
+                return CircleAvatar(
+                  radius: 50,
+                  backgroundColor: colorScheme.onPrimary.withOpacity(0.2),
+                  // Logika: Kalau ada URL foto, pakai NetworkImage. Kalau tidak, null.
+                  backgroundImage: controller.avatarUrl.value.isNotEmpty
+                      ? NetworkImage(controller.avatarUrl.value)
+                      : null,
+                  // Logika: Kalau tidak ada foto, tampilkan Inisial Huruf
+                  child: controller.avatarUrl.value.isEmpty
+                      ? Text(
+                          controller.initial.value, // Ambil value dari controller
+                          style: GoogleFonts.poppins(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onPrimary,
+                          ),
+                        )
+                      : null,
+                );
+              }),
+              
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -94,22 +108,29 @@ class AccountView extends GetView<AccountController> {
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            controller.username,
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onPrimary,
-            ),
-          ),
+          
+          // Nama User (WRAP DENGAN OBX)
+          Obx(() => Text(
+                controller.username.value, // Ambil value
+                style: GoogleFonts.poppins(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onPrimary,
+                ),
+              )),
+              
           const SizedBox(height: 4),
-          Text(
-            controller.email,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onPrimary.withOpacity(0.8),
-            ),
-          ),
+          
+          // Email User (WRAP DENGAN OBX)
+          Obx(() => Text(
+                controller.email.value, // Ambil value
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimary.withOpacity(0.8),
+                ),
+              )),
+              
           const SizedBox(height: 12),
+          
           // Status Badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -130,48 +151,26 @@ class AccountView extends GetView<AccountController> {
     );
   }
 
+  // --- BAGIAN BAWAH TIDAK ADA YANG DIUBAH ---
+
   // Statistics Section
   Widget _buildStatisticsSection(ThemeData theme, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          _buildStatCard(
-            theme,
-            colorScheme,
-            '12',
-            'Pesanan',
-            Icons.shopping_bag_outlined,
-          ),
+          _buildStatCard(theme, colorScheme, '12', 'Pesanan', Icons.shopping_bag_outlined),
           const SizedBox(width: 12),
-          _buildStatCard(
-            theme,
-            colorScheme,
-            '8',
-            'Diulas',
-            Icons.star_outlined,
-          ),
+          _buildStatCard(theme, colorScheme, '8', 'Diulas', Icons.star_outlined),
           const SizedBox(width: 12),
-          _buildStatCard(
-            theme,
-            colorScheme,
-            '3',
-            'Wishlist',
-            Icons.favorite_outline,
-          ),
+          _buildStatCard(theme, colorScheme, '3', 'Wishlist', Icons.favorite_outline),
         ],
       ),
     );
   }
 
   // Stat Card Component
-  Widget _buildStatCard(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    String value,
-    String label,
-    IconData icon,
-  ) {
+  Widget _buildStatCard(ThemeData theme, ColorScheme colorScheme, String value, String label, IconData icon) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -185,11 +184,7 @@ class AccountView extends GetView<AccountController> {
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: colorScheme.primary,
-              size: 24,
-            ),
+            Icon(icon, color: colorScheme.primary, size: 24),
             const SizedBox(height: 8),
             Text(
               value,
@@ -245,7 +240,7 @@ class AccountView extends GetView<AccountController> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           _buildMenuSection(
             theme: theme,
             title: 'Preferensi',
@@ -259,9 +254,7 @@ class AccountView extends GetView<AccountController> {
                     style: theme.textTheme.bodyLarge,
                   ),
                   subtitle: Text(
-                    controller.themeController.isDarkMode.value
-                        ? 'Aktif'
-                        : 'Aktif',
+                    'Aktif',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.6),
                     ),
@@ -312,9 +305,9 @@ class AccountView extends GetView<AccountController> {
                 theme: theme,
                 icon: Icons.info_outline,
                 title: 'Tentang Aplikasi',
-                subtitle: 'Versi 1.0.0',
+                subtitle: 'Versi 1.5.4',
                 onTap: () => Get.snackbar('Info',
-                    '89secondStuff v1.0.0\nA stylish shopping experience',
+                    '89secondStuff v1.5.4\nA stylish shopping experience',
                     snackPosition: SnackPosition.BOTTOM),
               ),
             ],
@@ -324,7 +317,7 @@ class AccountView extends GetView<AccountController> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              icon: Icon(Icons.logout, color: Colors.white),
+              icon: const Icon(Icons.logout, color: Colors.white),
               label: Text(
                 'Logout',
                 style: GoogleFonts.poppins(
